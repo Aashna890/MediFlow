@@ -32,4 +32,8 @@ Thumbs.db
 
 # Vercel
 .vercel
-```
+
+node_modules/
+dist/
+.env
+.DS_Store
