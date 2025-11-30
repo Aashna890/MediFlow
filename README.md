@@ -217,6 +217,4 @@ mediflow/
 - **Input Validation**: Server-side data validation
 - **SQL Injection Prevention**: MongoDB parameterized queries
 
-
-- 📱 Mobile (320px - 768px)
   
