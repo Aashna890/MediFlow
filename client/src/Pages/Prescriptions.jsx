@@ -13,9 +13,9 @@ import {
   CheckCircle,
   Pill
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Badge } from "@/components/ui/Badge";
 import {
   Select,
   SelectContent,
@@ -36,7 +36,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/components/ui/Dialog";
 import PrescriptionForm from "@/components/prescriptions/PrescriptionForm";
 
 const statusColors = {

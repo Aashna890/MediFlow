@@ -18,8 +18,8 @@ import {
   Bell,
   Pill
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/Button";
+import { Avatar, AvatarFallback } from "@/components/ui/Avatar";
 import { cn } from "@/lib/utils";
 
 const roleMenus = {
