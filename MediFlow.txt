@@ -1,0 +1,31 @@
+frontend: 
+PS C:\Users\gaikw\OneDrive\Desktop\Project\MediFlow\client\src> npm run dev
+
+> mediflow-client@1.0.0 dev
+> vite
+
+
+  VITE v5.4.21  ready in 289 ms
+
+  ➜  Local:   http://localhost:3000/
+  ➜  Network: use --host to expose
+  ➜  press h + enter to show help
+
+
+backend:
+
+
+PS C:\Users\gaikw\OneDrive\Desktop\Project\MediFlow\server> npm run dev
+
+> mediflow-backend@1.0.0 dev
+> nodemon server.js
+
+[nodemon] 3.1.11
+[nodemon] to restart at any time, enter `rs`
+[nodemon] watching path(s): *.*
+[nodemon] watching extensions: js,mjs,cjs,json
+[nodemon] starting `node server.js`
+🚀 MediFlow Server running on port 5000
+📊 Environment: development
+🔗 Health check: http://localhost:5000/health
+MongoDB Connected: localhost
