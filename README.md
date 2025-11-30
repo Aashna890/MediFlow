@@ -217,34 +217,6 @@ mediflow/
 - **Input Validation**: Server-side data validation
 - **SQL Injection Prevention**: MongoDB parameterized queries
 
-## 🎯 Key Highlights
 
-### Cross-Hospital Interoperability
-MediFlow's standout feature is its ability to share medical records across hospitals:
-- Patients can transfer their complete medical history using PAN or Aadhaar
-- Records include diagnoses, prescriptions, lab reports, and allergies
-- Consent-based sharing ensures patient privacy
-- Reduces duplicate tests and improves continuity of care
-
-### Doctor-Centric Workflow
-Streamlined consultation process:
-1. View scheduled appointments
-2. Start consultation (status: IN_PROGRESS)
-3. Complete consultation with diagnosis
-4. Create prescription with medicines
-5. Automatic medical record generation for sharing
-
-### Multi-Tenant SaaS Architecture
-- Each hospital operates in complete isolation
-- Shared infrastructure with dedicated data spaces
-- Scalable to thousands of hospitals
-- Zero infrastructure cost for hospitals
-
-## 📱 Responsive Design
-
-MediFlow is fully responsive and works seamlessly across:
-- 🖥️ Desktop (1920px+)
-- 💻 Laptop (1024px - 1920px)
-- 📱 Tablet (768px - 1024px)
 - 📱 Mobile (320px - 768px)
-- 
+  
