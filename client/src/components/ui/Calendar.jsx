@@ -1,7 +1,7 @@
 import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Button } from "./button"
+import { Button } from "./Button"
 
 const Calendar = ({ mode = "single", selected, onSelect, className }) => {
   const [currentMonth, setCurrentMonth] = React.useState(new Date())
