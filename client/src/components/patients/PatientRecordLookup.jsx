@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Label } from "@/components/ui/label";
+import { Label } from "@/components/ui/Label";
 import { Badge } from "@/components/ui/Badge";
 import {
   Dialog,
@@ -45,7 +45,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/Select";
 
 const recordTypeIcons = {
   DIAGNOSIS: Stethoscope,
