@@ -1,5 +1,3 @@
-// Mock API Client for MediFlow
-// This replaces base44 with a simple localStorage-based mock
 
 const STORAGE_KEY = 'mediflow_data';
 const AUTH_KEY = 'mediflow_auth';
