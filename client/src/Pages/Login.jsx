@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { apiClient } from "@/api/apiClient";
 import { Loader2, Stethoscope, Mail, Lock, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Label } from "@/components/ui/Label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -16,6 +16,13 @@ export default function Login() {
     email: "",
     password: ""
   });
+
+  // Check if already logged in
+  useEffect(() => {
+    if (apiClient.auth.isAuthenticated()) {
+      navigate('/dashboard');
+    }
+  }, [navigate]);
 
   const handleChange = (e) => {
     setFormData(prev => ({
@@ -31,19 +38,51 @@ export default function Login() {
     setError("");
 
     try {
+      // Step 1: Login
       await apiClient.auth.login(formData);
       
-      // Check if password change is forced
+      // Step 2: Get current user
       const user = await apiClient.auth.me();
       
+      // Step 3: Check if password change is required
       if (user.forcePasswordChange) {
-        // Redirect to change password page
         navigate('/change-password?forced=true');
         return;
       }
       
+      // Step 4: Get staff info to determine role and permissions
+      const staffList = await apiClient.entities.HospitalStaff.filter({ 
+        user_email: user.email 
+      });
+      
+      if (staffList.length === 0) {
+        setError("No staff record found. Please contact your administrator.");
+        apiClient.auth.logout();
+        return;
+      }
+      
+      const staff = staffList[0];
+      
+      // Step 5: Store staff info in sessionStorage for immediate access across app
+      sessionStorage.setItem('current_staff', JSON.stringify(staff));
+      sessionStorage.setItem('current_user', JSON.stringify(user));
+      
+      // Step 6: Get and store hospital info
+      const hospitals = await apiClient.entities.Hospital.filter({ 
+        id: staff.hospital_id 
+      });
+      
+      if (hospitals.length > 0) {
+        sessionStorage.setItem('current_hospital', JSON.stringify(hospitals[0]));
+      }
+      
+      // Step 7: Navigate with full page reload to ensure all components load with correct role
       const returnUrl = searchParams.get('returnUrl') || '/dashboard';
-      navigate(returnUrl);
+      
+      // Use window.location.href to force full page reload
+      // This ensures Layout and all components reinitialize with correct role
+      window.location.href = returnUrl;
+      
     } catch (err) {
       if (err.message.includes('Password change required')) {
         navigate('/change-password?forced=true');

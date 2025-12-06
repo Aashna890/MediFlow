@@ -17,17 +17,17 @@ import {
   Shield,
   Activity
 } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Badge } from "@/components/ui/Badge";
-import { Avatar, AvatarFallback } from "@/components/ui/Avatar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/Select";
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -35,13 +35,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/Table";
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/Dialog";
+} from "@/components/ui/dialog";
 import PatientForm from "@/components/patients/PatientForm";
 import PatientRecordLookup from "@/components/patients/PatientRecordLookup";
 
@@ -63,11 +63,14 @@ export default function Patients() {
     loadStaffInfo();
   }, []);
 
-  // Close dropdown when clicking outside
+  // FIXED: Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      const dropdown = document.querySelector('.dropdown-menu-wrapper');
-      if (openDropdownId && dropdown && !dropdown.contains(event.target)) {
+      // Check if the click is on a dropdown button or inside a dropdown
+      const isDropdownButton = event.target.closest('.dropdown-toggle');
+      const isDropdownMenu = event.target.closest('.dropdown-menu-wrapper');
+      
+      if (openDropdownId && !isDropdownButton && !isDropdownMenu) {
         setOpenDropdownId(null);
       }
     };
@@ -106,55 +109,55 @@ export default function Patients() {
     enabled: !!hospitalId
   });
 
-  // Replace the createMutation in Patients.jsx with this:
+  const createMutation = useMutation({
+    mutationFn: async (data) => {
+      const count = patients.length;
+      const patientId = `P-${String(count + 1).padStart(5, "0")}`;
+      
+      const patient = await apiClient.entities.Patient.create({
+        ...data,
+        hospital_id: hospitalId,
+        patient_id: patientId,
+        status: "ACTIVE",
+        admission_date: data.patient_type === "IPD" ? format(new Date(), "yyyy-MM-dd") : null
+      });
 
-const createMutation = useMutation({
-  mutationFn: async (data) => {
-    const count = patients.length;
-    const patientId = `P-${String(count + 1).padStart(5, "0")}`;
-    
-    const patient = await apiClient.entities.Patient.create({
-      ...data,
-      hospital_id: hospitalId,
-      patient_id: patientId,
-      status: "ACTIVE",
-      admission_date: data.patient_type === "IPD" ? format(new Date(), "yyyy-MM-dd") : null
-    });
-
-    // Create initial medical record for admission
-    if (patient && (data.pan_number || data.aadhaar_number)) {
-      try {
-        await apiClient.entities.MedicalRecord.create({
-          patient_pan: data.pan_number || "",
-          patient_aadhaar: data.aadhaar_number || "",
-          patient_name: `${data.first_name} ${data.last_name}`,
-          hospital_id: hospitalId,
-          hospital_name: hospital?.name || "Unknown Hospital",
-          record_type: data.patient_type === "IPD" ? "ADMISSION" : "DIAGNOSIS",
-          record_date: format(new Date(), "yyyy-MM-dd"),
-          diagnosis: "Initial Registration",
-          treatment: data.medical_history || "Patient registered",
-          medicines: [],
-          doctor_name: "",
-          department: data.department || "General",
-          notes: data.allergies ? `Allergies: ${data.allergies}` : "",
-          lab_results: "",
-          is_shared: true
-        });
-        console.log("Initial medical record created for new patient");
-      } catch (err) {
-        console.error("Error creating initial medical record:", err);
+      // Create initial medical record
+      if (patient && (data.pan_number || data.aadhaar_number)) {
+        try {
+          await apiClient.entities.MedicalRecord.create({
+            patient_pan: data.pan_number || "",
+            patient_aadhaar: data.aadhaar_number || "",
+            patient_name: `${data.first_name} ${data.last_name}`,
+            patient_dob: data.date_of_birth,
+            patient_gender: data.gender,
+            patient_blood_group: data.blood_group,
+            patient_allergies: data.allergies,
+            patient_medical_history: data.medical_history,
+            hospital_id: hospitalId,
+            hospital_name: hospital?.name || "Unknown Hospital",
+            record_type: data.patient_type === "IPD" ? "ADMISSION" : "DIAGNOSIS",
+            record_date: format(new Date(), "yyyy-MM-dd"),
+            diagnosis: "Initial Registration",
+            treatment: data.medical_history || "Patient registered",
+            medicines: [],
+            doctor_name: "",
+            department: data.department || "General",
+            notes: data.allergies ? `Allergies: ${data.allergies}` : "",
+            is_shared: true
+          });
+        } catch (err) {
+          console.error("Error creating initial medical record:", err);
+        }
       }
-    }
 
-    return patient;
-  },
-  onSuccess: () => {
-    queryClient.invalidateQueries(["patients"]);
-    queryClient.invalidateQueries(["medicalRecords"]);
-    setShowForm(false);
-  }
-});
+      return patient;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["patients"]);
+      setShowForm(false);
+    }
+  });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => apiClient.entities.Patient.update(id, data),
@@ -206,7 +209,6 @@ const createMutation = useMutation({
   };
 
   const handleImportRecords = async (importData) => {
-    // Create new patient with imported records
     const count = patients.length;
     const patientId = `P-${String(count + 1).padStart(5, "0")}`;
     
@@ -232,7 +234,6 @@ const createMutation = useMutation({
     queryClient.invalidateQueries(["patients"]);
   };
 
-  // Filter patients
   const filteredPatients = patients.filter(patient => {
     const matchesSearch = 
       patient.first_name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -278,7 +279,6 @@ const createMutation = useMutation({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Patients</h1>
@@ -300,7 +300,6 @@ const createMutation = useMutation({
         </div>
       </div>
 
-      {/* Filters */}
       <div className="bg-white rounded-xl border border-slate-100 p-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative">
@@ -340,7 +339,6 @@ const createMutation = useMutation({
         </div>
       </div>
 
-      {/* Patients Table */}
       <div className="bg-white rounded-xl border border-slate-100">
         <div className="overflow-x-auto">
           <Table>
@@ -424,18 +422,30 @@ const createMutation = useMutation({
                         <Button 
                           variant="ghost" 
                           size="icon"
-                          onClick={() => setOpenDropdownId(openDropdownId === patient.id ? null : patient.id)}
+                          className="dropdown-toggle"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenDropdownId(openDropdownId === patient.id ? null : patient.id);
+                          }}
                         >
                           <MoreVertical className="w-4 h-4" />
                         </Button>
                         
                         {openDropdownId === patient.id && (
                           <div 
-                            className="absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-[100]"
-                            style={{ position: 'absolute', right: 0, top: '100%' }}
+                            className="absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-xl border border-slate-200 py-1"
+                            style={{ 
+                              position: 'absolute', 
+                              right: 0, 
+                              top: '100%',
+                              zIndex: 9999 
+                            }}
                           >
                             <button
-                              onClick={() => handleViewDetails(patient)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewDetails(patient);
+                              }}
                               className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 w-full text-left transition-colors"
                             >
                               <Eye className="w-4 h-4" />
@@ -443,7 +453,10 @@ const createMutation = useMutation({
                             </button>
                             
                             <button
-                              onClick={() => handleEdit(patient)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEdit(patient);
+                              }}
                               className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 w-full text-left transition-colors"
                             >
                               <Edit2 className="w-4 h-4" />
@@ -453,7 +466,10 @@ const createMutation = useMutation({
                             <div className="border-t border-slate-100 my-1"></div>
                             
                             <button
-                              onClick={() => handleViewPrescriptions(patient)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewPrescriptions(patient);
+                              }}
                               className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-blue-50 w-full text-left text-blue-700 transition-colors"
                             >
                               <FileText className="w-4 h-4" />
@@ -461,7 +477,10 @@ const createMutation = useMutation({
                             </button>
                             
                             <button
-                              onClick={() => handleCreateAppointment(patient)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCreateAppointment(patient);
+                              }}
                               className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-teal-50 w-full text-left text-teal-700 transition-colors"
                             >
                               <Activity className="w-4 h-4" />
@@ -479,7 +498,6 @@ const createMutation = useMutation({
         </div>
       </div>
 
-      {/* Patient Form Dialog */}
       <PatientForm
         open={showForm}
         onClose={() => {
@@ -493,7 +511,6 @@ const createMutation = useMutation({
         loading={createMutation.isPending || updateMutation.isPending}
       />
 
-      {/* Record Transfer Lookup Dialog */}
       <PatientRecordLookup
         open={showRecordLookup}
         onClose={() => setShowRecordLookup(false)}
@@ -501,7 +518,6 @@ const createMutation = useMutation({
         currentHospitalId={hospitalId}
       />
 
-      {/* View Patient Details Dialog */}
       <Dialog open={!!viewingPatient} onOpenChange={() => setViewingPatient(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -513,7 +529,6 @@ const createMutation = useMutation({
           
           {viewingPatient && (
             <div className="space-y-6 mt-4">
-              {/* Basic Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-slate-500">Patient ID</p>
@@ -550,7 +565,6 @@ const createMutation = useMutation({
                 </div>
               </div>
 
-              {/* Contact Info */}
               <div>
                 <h3 className="font-semibold text-slate-800 mb-3">Contact Information</h3>
                 <div className="grid grid-cols-2 gap-4">
@@ -569,7 +583,6 @@ const createMutation = useMutation({
                 </div>
               </div>
 
-              {/* Medical Info */}
               <div>
                 <h3 className="font-semibold text-slate-800 mb-3">Medical Information</h3>
                 <div className="space-y-3">
@@ -592,7 +605,6 @@ const createMutation = useMutation({
                 </div>
               </div>
 
-              {/* Transferred Info */}
               {viewingPatient.imported_from_hospital && (
                 <div className="p-4 bg-teal-50 rounded-lg border border-teal-100">
                   <div className="flex items-center gap-2 mb-2">
@@ -605,7 +617,6 @@ const createMutation = useMutation({
                 </div>
               )}
 
-              {/* Quick Actions */}
               <div className="flex gap-3 pt-4 border-t">
                 <Button 
                   onClick={() => {

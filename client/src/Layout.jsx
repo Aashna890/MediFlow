@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "./utils";
 import { apiClient } from "@/api/apiClient";
 import {
@@ -18,8 +18,8 @@ import {
   Bell,
   Pill
 } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Avatar, AvatarFallback } from "@/components/ui/Avatar";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
 const roleMenus = {
@@ -54,6 +54,7 @@ const roleMenus = {
 };
 
 export default function Layout({ children, currentPageName }) {
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [staffInfo, setStaffInfo] = useState(null);
@@ -63,8 +64,13 @@ export default function Layout({ children, currentPageName }) {
   const [headerDropdownOpen, setHeaderDropdownOpen] = useState(false);
 
   useEffect(() => {
-    loadUserData();
-  }, []);
+    // Only load if we're on a protected page
+    if (!["Home", "HospitalRegistration", "Login"].includes(currentPageName)) {
+      loadUserData();
+    } else {
+      setLoading(false);
+    }
+  }, [currentPageName]);
 
   // Close sidebar dropdown when clicking outside
   useEffect(() => {
@@ -92,28 +98,75 @@ export default function Layout({ children, currentPageName }) {
 
   const loadUserData = async () => {
     try {
+      setLoading(true);
+      
+      // Check if user is authenticated
+      if (!apiClient.auth.isAuthenticated()) {
+        navigate('/login');
+        return;
+      }
+
+      // Try to get cached data from sessionStorage first
+      const cachedStaff = sessionStorage.getItem('current_staff');
+      const cachedHospital = sessionStorage.getItem('current_hospital');
+      const cachedUser = sessionStorage.getItem('current_user');
+
+      if (cachedStaff && cachedHospital && cachedUser) {
+        // Use cached data for instant load
+        setStaffInfo(JSON.parse(cachedStaff));
+        setHospital(JSON.parse(cachedHospital));
+        setUser(JSON.parse(cachedUser));
+        setLoading(false);
+        return;
+      }
+
+      // If no cached data, fetch from API
       const currentUser = await apiClient.auth.me();
       setUser(currentUser);
       
       // Get staff info
-      const staffList = await apiClient.entities.HospitalStaff.filter({ user_email: currentUser.email });
+      const staffList = await apiClient.entities.HospitalStaff.filter({ 
+        user_email: currentUser.email 
+      });
+      
       if (staffList.length > 0) {
-        setStaffInfo(staffList[0]);
+        const staff = staffList[0];
+        setStaffInfo(staff);
+        
+        // Store staff info in sessionStorage for quick access on next load
+        sessionStorage.setItem('current_staff', JSON.stringify(staff));
+        sessionStorage.setItem('current_user', JSON.stringify(currentUser));
         
         // Get hospital info
-        const hospitals = await apiClient.entities.Hospital.filter({ id: staffList[0].hospital_id });
+        const hospitals = await apiClient.entities.Hospital.filter({ 
+          id: staff.hospital_id 
+        });
+        
         if (hospitals.length > 0) {
           setHospital(hospitals[0]);
+          // Store hospital info in sessionStorage
+          sessionStorage.setItem('current_hospital', JSON.stringify(hospitals[0]));
         }
+      } else {
+        // No staff record found - redirect to login
+        console.error("No staff record found for user");
+        handleLogout();
       }
     } catch (error) {
       console.error("Error loading user data:", error);
+      // If error, redirect to login
+      handleLogout();
     } finally {
       setLoading(false);
     }
   };
 
   const handleLogout = () => {
+    // Clear session storage
+    sessionStorage.removeItem('current_staff');
+    sessionStorage.removeItem('current_hospital');
+    sessionStorage.removeItem('current_user');
+    // Call API logout
     apiClient.auth.logout();
   };
 
@@ -128,6 +181,12 @@ export default function Layout({ children, currentPageName }) {
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
       </div>
     );
+  }
+
+  // If no staff info after loading, redirect to login
+  if (!staffInfo) {
+    navigate('/login');
+    return null;
   }
 
   const menuItems = roleMenus[staffInfo?.role] || roleMenus.HOSPITAL_ADMIN;
@@ -157,7 +216,7 @@ export default function Layout({ children, currentPageName }) {
             </div>
             <div className="flex-1 min-w-0">
               <h1 className="font-semibold text-slate-800 truncate">
-                {hospital?.name || "MediFlow"}
+                {hospital?.name || "MediFlow HMS"}
               </h1>
               <p className="text-xs text-slate-500">Hospital Management</p>
             </div>

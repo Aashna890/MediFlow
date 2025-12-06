@@ -1,4 +1,4 @@
-
+// Mock API Client for MediFlow
 const STORAGE_KEY = 'mediflow_data';
 const AUTH_KEY = 'mediflow_auth';
 
